@@ -1,0 +1,244 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoshop-product
+  labels:
+    app: daoshop-product
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-product
+  template:
+    metadata:
+      labels:
+        app: daoshop-product
+    spec:
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - image: {{ docker_registry }}/ms_platform/daoshop-product:2.0.0
+        name: daoshop-product
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "200m"
+          limits:
+            memory: "1000Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8761
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+          readOnly: true
+        env:
+        - name: SW_AGENT_NAMESPACE
+          value: "{{ project_code }}"
+        - name: SW_AGENT_NAME
+          value: daoshop-product
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: "{{ skywalking_url }}"
+        - name: EUREKA_URL
+          value: "{{ eureka_url }}"
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoshop-order
+  labels:
+    app: daoshop-order
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-order
+  template:
+    metadata:
+      labels:
+        app: daoshop-order
+    spec:
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - image: {{ docker_registry }}/ms_platform/daoshop-order:2.0.0
+        name: daoshop-order
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "200m"
+          limits:
+            memory: "1000Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8761
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+          readOnly: true
+        env:
+        - name: SW_AGENT_NAMESPACE
+          value: "{{ project_code }}"
+        - name: SW_AGENT_NAME
+          value: "daoshop-order"
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: "{{ skywalking_url }}"
+        - name: EUREKA_URL
+          value: "{{ eureka_url }}"
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoshop-user-center
+  labels:
+    app: daoshop-user-center
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-user-center
+  template:
+    metadata:
+      labels:
+        app: daoshop-user-center
+    spec:
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - image: {{ docker_registry }}/ms_platform/daoshop-user-center:2.0.0
+        name: daoshop-user-center
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "200m"
+          limits:
+            memory: "1000Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8761
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+          readOnly: true
+        env:
+        - name: SW_AGENT_NAMESPACE
+          value: "{{ project_code }}"
+        - name: SW_AGENT_NAME
+          value: daoshop-user-center
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: "{{ skywalking_url }}"
+        - name: EUREKA_URL
+          value: "{{ eureka_url }}"
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoshop-shop-admin
+  labels:
+    app: daoshop-shop-admin
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-shop-admin
+  template:
+    metadata:
+      labels:
+        app: daoshop-shop-admin
+    spec:
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - image: {{ docker_registry }}/ms_platform/daoshop-shop-admin:2.0.0
+        name: daoshop-shop-admin
+        resources:
+          requests:
+            memory: "1000Mi"
+            cpu: "200m"
+          limits:
+            memory: "1000Mi"
+            cpu: "200m"
+        ports:
+        - containerPort: 8761
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+          readOnly: true
+        env:
+        - name: APOLLO_APP_ID
+          value: "{{ project_code }}.dao_shop"
+        - name: APOLLO_META
+          value: "{{ apollo-config-server }}"
+        - name: SW_AGENT_NAMESPACE
+          value: "{{ project_code }}"
+        - name: SW_AGENT_NAME
+          value: daoshop-shop-admin
+        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+          value: "{{ skywalking_url }}"
+        - name: EUREKA_URL
+          value: "{{ eureka_url }}"
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtim
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: daoshop-ui
+  labels:
+    app: daoshop-ui
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-ui
+  template:
+    metadata:
+      labels:
+        app: daoshop-ui
+    spec:
+      imagePullSecrets:
+      - name: harbor
+      containers:
+      - image: {{ docker_registry }}/ms_platform/daoshop-ui:2.0.0
+        name: daoshop-ui
+        resources:
+          requests:
+            memory: "500Mi"
+            cpu: "100m"
+          limits:
+            memory: "500Mi"
+            cpu: "100m"
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - name: host-time
+          mountPath: /etc/localtime
+          readOnly: true
+        env:
+        - name: BASE_URL
+          value: "{{ gateway_runtime_url }}"
+      volumes:
+      - name: host-time
+        hostPath:
+          path: /etc/localtime
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoshop-ui
+spec:
+  type: NodePort
+  ports:
+  - port: 80
+  selector:
+    app: daoshop-ui
+
