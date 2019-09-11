@@ -16,7 +16,7 @@ spec:
       imagePullSecrets:
       - name: harbor
       containers:
-      - image: {{ docker_registry }}/ms_platform/daoshop-product:2.0.0
+      - image: {{ daoshop-product.image }}
         name: daoshop-product
         resources:
           requests:
@@ -63,7 +63,7 @@ spec:
       imagePullSecrets:
       - name: harbor
       containers:
-      - image: {{ docker_registry }}/ms_platform/daoshop-order:2.0.0
+      - image: {{ daoshop-order.image }}
         name: daoshop-order
         resources:
           requests:
@@ -110,7 +110,7 @@ spec:
       imagePullSecrets:
       - name: harbor
       containers:
-      - image: {{ docker_registry }}/ms_platform/daoshop-user-center:2.0.0
+      - image: {{ daoshop-user-center.image }}
         name: daoshop-user-center
         resources:
           requests:
@@ -157,7 +157,7 @@ spec:
       imagePullSecrets:
       - name: harbor
       containers:
-      - image: {{ docker_registry }}/ms_platform/daoshop-shop-admin:2.0.0
+      - image: {{ daoshop-admin.image }}
         name: daoshop-shop-admin
         resources:
           requests:
@@ -176,7 +176,7 @@ spec:
         - name: APOLLO_APP_ID
           value: "{{ project_code }}.dao_shop"
         - name: APOLLO_META
-          value: "{{ apollo-config-server }}"
+          value: "{{ apollo_config_server }}"
         - name: SW_AGENT_NAMESPACE
           value: "{{ project_code }}"
         - name: SW_AGENT_NAME
@@ -208,7 +208,7 @@ spec:
       imagePullSecrets:
       - name: harbor
       containers:
-      - image: {{ docker_registry }}/ms_platform/daoshop-ui:2.0.0
+      - image: {{ daoshop-ui.image }}
         name: daoshop-ui
         resources:
           requests:
