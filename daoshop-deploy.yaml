@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: daoshop-product
+  name: {{ instance_name }}-daoshop-product
   labels:
-    app: daoshop-product
+    app: {{ instance_name }}-daoshop-product
 spec:
   selector:
     matchLabels:
-      app: daoshop-product
+      app: {{ instance_name }}-daoshop-product
   template:
     metadata:
       labels:
-        app: daoshop-product
+        app: {{ instance_name }}-daoshop-product
     spec:
       imagePullSecrets:
       - name: harbor
       containers:
       - image: {{ daoshop-product.image }}
-        name: daoshop-product
+        name: {{ instance_name }}-daoshop-product
         resources:
           requests:
             memory: "1000Mi"
@@ -35,7 +35,7 @@ spec:
         - name: SW_AGENT_NAMESPACE
           value: "{{ project_code }}"
         - name: SW_AGENT_NAME
-          value: daoshop-product
+          value: {{ instance_name }}-daoshop-product
         - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
           value: "{{ skywalking_url }}"
         - name: EUREKA_URL
@@ -48,23 +48,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: daoshop-order
+  name: {{ instance_name }}-daoshop-order
   labels:
-    app: daoshop-order
+    app: {{ instance_name }}-daoshop-order
 spec:
   selector:
     matchLabels:
-      app: daoshop-order
+      app: {{ instance_name }}-daoshop-order
   template:
     metadata:
       labels:
-        app: daoshop-order
+        app: {{ instance_name }}-daoshop-order
     spec:
       imagePullSecrets:
       - name: harbor
       containers:
       - image: {{ daoshop-order.image }}
-        name: daoshop-order
+        name: {{ instance_name }}-daoshop-order
         resources:
           requests:
             memory: "1000Mi"
@@ -82,7 +82,7 @@ spec:
         - name: SW_AGENT_NAMESPACE
           value: "{{ project_code }}"
         - name: SW_AGENT_NAME
-          value: "daoshop-order"
+          value: {{ instance_name }}-daoshop-order
         - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
           value: "{{ skywalking_url }}"
         - name: EUREKA_URL
@@ -95,23 +95,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: daoshop-user-center
+  name: {{ instance_name }}-daoshop-user-center
   labels:
-    app: daoshop-user-center
+    app: {{ instance_name }}-daoshop-user-center
 spec:
   selector:
     matchLabels:
-      app: daoshop-user-center
+      app: {{ instance_name }}-daoshop-user-center
   template:
     metadata:
       labels:
-        app: daoshop-user-center
+        app: {{ instance_name }}-daoshop-user-center
     spec:
       imagePullSecrets:
       - name: harbor
       containers:
       - image: {{ daoshop-user-center.image }}
-        name: daoshop-user-center
+        name: {{ instance_name }}-daoshop-user-center
         resources:
           requests:
             memory: "1000Mi"
@@ -129,7 +129,7 @@ spec:
         - name: SW_AGENT_NAMESPACE
           value: "{{ project_code }}"
         - name: SW_AGENT_NAME
-          value: daoshop-user-center
+          value: {{ instance_name }}-daoshop-user-center
         - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
           value: "{{ skywalking_url }}"
         - name: EUREKA_URL
@@ -142,23 +142,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: daoshop-shop-admin
+  name: {{ instance_name }}-daoshop-shop-admin
   labels:
-    app: daoshop-shop-admin
+    app: {{ instance_name }}-daoshop-shop-admin
 spec:
   selector:
     matchLabels:
-      app: daoshop-shop-admin
+      app: {{ instance_name }}-daoshop-shop-admin
   template:
     metadata:
       labels:
-        app: daoshop-shop-admin
+        app: {{ instance_name }}-daoshop-shop-admin
     spec:
       imagePullSecrets:
       - name: harbor
       containers:
       - image: {{ daoshop-admin.image }}
-        name: daoshop-shop-admin
+        name: {{ instance_name }}-daoshop-shop-admin
         resources:
           requests:
             memory: "1000Mi"
@@ -180,7 +180,7 @@ spec:
         - name: SW_AGENT_NAMESPACE
           value: "{{ project_code }}"
         - name: SW_AGENT_NAME
-          value: daoshop-shop-admin
+          value: {{ instance_name }}-daoshop-shop-admin
         - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
           value: "{{ skywalking_url }}"
         - name: EUREKA_URL
@@ -193,23 +193,23 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: daoshop-ui
+  name: {{ instance_name }}-daoshop-ui
   labels:
-    app: daoshop-ui
+    app: {{ instance_name }}-daoshop-ui
 spec:
   selector:
     matchLabels:
-      app: daoshop-ui
+      app: {{ instance_name }}-daoshop-ui
   template:
     metadata:
       labels:
-        app: daoshop-ui
+        app: {{ instance_name }}-daoshop-ui
     spec:
       imagePullSecrets:
       - name: harbor
       containers:
       - image: {{ daoshop-ui.image }}
-        name: daoshop-ui
+        name: {{ instance_name }}-daoshop-ui
         resources:
           requests:
             memory: "500Mi"
@@ -234,11 +234,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: daoshop-ui
+  name: {{ instance_name }}-daoshop-ui
 spec:
   type: NodePort
   ports:
   - port: 80
   selector:
-    app: daoshop-ui
+    app: {{ instance_name }}-daoshop-ui
 
