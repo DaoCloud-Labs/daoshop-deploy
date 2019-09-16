@@ -174,7 +174,7 @@ spec:
           readOnly: true
         env:
         - name: APOLLO_APP_ID
-          value: "{{ project_code }}.dao_shop"
+          value: "{{ project_code }}.{{ dmp_config_id }}"
         - name: APOLLO_META
           value: "{{ apollo_config_server }}"
         - name: SW_AGENT_NAMESPACE
