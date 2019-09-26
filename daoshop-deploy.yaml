@@ -15,6 +15,14 @@ spec:
     spec:
       imagePullSecrets:
       - name: harbor
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/sidecar", "/target"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
       containers:
       - image: {{ daoshop-product.image }}
         name: {{ instance_name }}-daoshop-product
@@ -32,18 +40,44 @@ spec:
           mountPath: /etc/localtime
           readOnly: true
         env:
-        - name: SW_AGENT_NAMESPACE
-          value: "{{ project_code }}"
-        - name: SW_AGENT_NAME
-          value: {{ instance_name }}-daoshop-product
-        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-          value: "{{ skywalking_url }}"
-        - name: EUREKA_URL
-          value: "{{ eureka_url }}"
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'     
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
       volumes:
-      - name: host-time
-        hostPath:
-          path: /etc/localtime
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+        - name: host-time
+          hostPath:
+            path: /etc/localtim
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -60,6 +94,14 @@ spec:
       labels:
         app: {{ instance_name }}-daoshop-order
     spec:
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/sidecar", "/target"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
       imagePullSecrets:
       - name: harbor
       containers:
@@ -79,18 +121,44 @@ spec:
           mountPath: /etc/localtime
           readOnly: true
         env:
-        - name: SW_AGENT_NAMESPACE
-          value: "{{ project_code }}"
-        - name: SW_AGENT_NAME
-          value: {{ instance_name }}-daoshop-order
-        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-          value: "{{ skywalking_url }}"
-        - name: EUREKA_URL
-          value: "{{ eureka_url }}"
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'     
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
       volumes:
-      - name: host-time
-        hostPath:
-          path: /etc/localtime
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+        - name: host-time
+          hostPath:
+            path: /etc/localtim
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -107,6 +175,14 @@ spec:
       labels:
         app: {{ instance_name }}-daoshop-user-center
     spec:
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/sidecar", "/target"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
       imagePullSecrets:
       - name: harbor
       containers:
@@ -126,18 +202,44 @@ spec:
           mountPath: /etc/localtime
           readOnly: true
         env:
-        - name: SW_AGENT_NAMESPACE
-          value: "{{ project_code }}"
-        - name: SW_AGENT_NAME
-          value: {{ instance_name }}-daoshop-user-center
-        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-          value: "{{ skywalking_url }}"
-        - name: EUREKA_URL
-          value: "{{ eureka_url }}"
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'     
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
       volumes:
-      - name: host-time
-        hostPath:
-          path: /etc/localtime
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+        - name: host-time
+          hostPath:
+            path: /etc/localtim
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -154,6 +256,14 @@ spec:
       labels:
         app: {{ instance_name }}-daoshop-shop-admin
     spec:
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/sidecar", "/target"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
       imagePullSecrets:
       - name: harbor
       containers:
@@ -173,22 +283,47 @@ spec:
           mountPath: /etc/localtime
           readOnly: true
         env:
-        - name: APOLLO_APP_ID
-          value: "{{ project_code }}.{{ dmp_config_id }}"
-        - name: APOLLO_META
-          value: "{{ apollo_config_server }}"
-        - name: SW_AGENT_NAMESPACE
-          value: "{{ project_code }}"
-        - name: SW_AGENT_NAME
-          value: {{ instance_name }}-daoshop-shop-admin
-        - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-          value: "{{ skywalking_url }}"
-        - name: EUREKA_URL
-          value: "{{ eureka_url }}"
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'     
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
       volumes:
-      - name: host-time
-        hostPath:
-          path: /etc/localtim
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+        - name: host-time
+          hostPath:
+            path: /etc/localtim
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -230,6 +365,7 @@ spec:
       - name: host-time
         hostPath:
           path: /etc/localtime
+          
 ---
 apiVersion: v1
 kind: Service
