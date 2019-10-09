@@ -1,45 +1,47 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ instance_name }}-daoshop-product
+  namespace: dmp-ns1
+  name: daoshop-product
   labels:
-    app: {{ instance_name }}-daoshop-product
+    app: daoshop-product
 spec:
   selector:
     matchLabels:
-      app: {{ instance_name }}-daoshop-product
+      app: daoshop-product
   template:
     metadata:
       labels:
-        app: {{ instance_name }}-daoshop-product
+        app: daoshop-product
     spec:
-      imagePullSecrets:
-      - name: harbor
+      # refs: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/
       initContainers:
         - name: dx-monitor-agent-sidecar
-          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
           imagePullPolicy: IfNotPresent
-          command: ["cp", "-r", "/sidecar", "/target"]
+          command: 
+            - "sh"
+            - "-c"
+            - > 
+              mv /sidecar/skywalking/agent/optional-plugins/apm-trace-ignore-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
+              echo 'trace.ignore_path=${TRACE_IGNORE_PATH:/api/sail/**}' >> /sidecar/skywalking/agent/config/apm-trace-ignore-plugin.config;
+              cp -r /sidecar /target;
           volumeMounts:
             - name: sidecar
               mountPath: /target
       containers:
-      - image: {{ daoshop-product.image }}
-        name: {{ instance_name }}-daoshop-product
-        resources:
-          requests:
-            memory: "2000Mi"
-            cpu: "500m"
-          limits:
-            memory: "2000Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 8761
-        volumeMounts:
-        - name: host-time
-          mountPath: /etc/localtime
-          readOnly: true
-        env:
+        - image: {{ daoshop-product.image }}
+          name: daoshop-product
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "500m"
+            limits:
+              memory: "2048Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 18080
+          env:
             - name: JAVA_OPTS
               value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
             - name: DAOCLOUD_DC_SERVER
@@ -49,252 +51,9 @@ spec:
                 fieldRef:
                   fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
             - name: AGENT_INSTANCE_UUID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'     
-            - name: AGENT_INSTANCE_ID
               valueFrom:
                 fieldRef:
                   fieldPath: 'metadata.name'
-            - name: DMP_ENVIRONMENT_CODE
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
-            - name: DX_APPLICATION_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
-            - name: DX_APPLICATION_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
-            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
-            - name: VEDFOLNIR_SERVER_URL
-              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
-      volumes:
-        - name: sidecar  #共享agent文件夹
-          emptyDir: {}
-        - name: host-time
-          hostPath:
-            path: /etc/localtim
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ instance_name }}-daoshop-order
-  labels:
-    app: {{ instance_name }}-daoshop-order
-spec:
-  selector:
-    matchLabels:
-      app: {{ instance_name }}-daoshop-order
-  template:
-    metadata:
-      labels:
-        app: {{ instance_name }}-daoshop-order
-    spec:
-      initContainers:
-        - name: dx-monitor-agent-sidecar
-          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
-          imagePullPolicy: IfNotPresent
-          command: ["cp", "-r", "/sidecar", "/target"]
-          volumeMounts:
-            - name: sidecar
-              mountPath: /target
-      imagePullSecrets:
-      - name: harbor
-      containers:
-      - image: {{ daoshop-order.image }}
-        name: {{ instance_name }}-daoshop-order
-        resources:
-          requests:
-            memory: "2000Mi"
-            cpu: "500m"
-          limits:
-            memory: "2000Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 8761
-        volumeMounts:
-        - name: host-time
-          mountPath: /etc/localtime
-          readOnly: true
-        env:
-            - name: JAVA_OPTS
-              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
-            - name: DAOCLOUD_DC_SERVER
-              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
-            - name: AGENT_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
-            - name: AGENT_INSTANCE_UUID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'     
-            - name: AGENT_INSTANCE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'
-            - name: DMP_ENVIRONMENT_CODE
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
-            - name: DX_APPLICATION_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
-            - name: DX_APPLICATION_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
-            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
-            - name: VEDFOLNIR_SERVER_URL
-              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
-      volumes:
-        - name: sidecar  #共享agent文件夹
-          emptyDir: {}
-        - name: host-time
-          hostPath:
-            path: /etc/localtim
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ instance_name }}-daoshop-user-center
-  labels:
-    app: {{ instance_name }}-daoshop-user-center
-spec:
-  selector:
-    matchLabels:
-      app: {{ instance_name }}-daoshop-user-center
-  template:
-    metadata:
-      labels:
-        app: {{ instance_name }}-daoshop-user-center
-    spec:
-      initContainers:
-        - name: dx-monitor-agent-sidecar
-          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
-          imagePullPolicy: IfNotPresent
-          command: ["cp", "-r", "/sidecar", "/target"]
-          volumeMounts:
-            - name: sidecar
-              mountPath: /target
-      imagePullSecrets:
-      - name: harbor
-      containers:
-      - image: {{ daoshop-user-center.image }}
-        name: {{ instance_name }}-daoshop-user-center
-        resources:
-          requests:
-            memory: "2000Mi"
-            cpu: "500m"
-          limits:
-            memory: "2000Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 8761
-        volumeMounts:
-        - name: host-time
-          mountPath: /etc/localtime
-          readOnly: true
-        env:
-            - name: JAVA_OPTS
-              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
-            - name: DAOCLOUD_DC_SERVER
-              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
-            - name: AGENT_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
-            - name: AGENT_INSTANCE_UUID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'     
-            - name: AGENT_INSTANCE_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'
-            - name: DMP_ENVIRONMENT_CODE
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
-            - name: DX_APPLICATION_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
-            - name: DX_APPLICATION_ID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
-            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
-              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
-            - name: VEDFOLNIR_SERVER_URL
-              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
-      volumes:
-        - name: sidecar  #共享agent文件夹
-          emptyDir: {}
-        - name: host-time
-          hostPath:
-            path: /etc/localtim
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: {{ instance_name }}-daoshop-shop-admin
-  labels:
-    app: {{ instance_name }}-daoshop-shop-admin
-spec:
-  selector:
-    matchLabels:
-      app: {{ instance_name }}-daoshop-shop-admin
-  template:
-    metadata:
-      labels:
-        app: {{ instance_name }}-daoshop-shop-admin
-    spec:
-      initContainers:
-        - name: dx-monitor-agent-sidecar
-          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:latest
-          imagePullPolicy: IfNotPresent
-          command: ["cp", "-r", "/sidecar", "/target"]
-          volumeMounts:
-            - name: sidecar
-              mountPath: /target
-      imagePullSecrets:
-      - name: harbor
-      containers:
-      - image: {{ daoshop-admin.image }}
-        name: {{ instance_name }}-daoshop-shop-admin
-        resources:
-          requests:
-            memory: "2000Mi"
-            cpu: "500m"
-          limits:
-            memory: "2000Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 8761
-        volumeMounts:
-        - name: host-time
-          mountPath: /etc/localtime
-          readOnly: true
-        env:
-            - name: JAVA_OPTS
-              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
-            - name: DAOCLOUD_DC_SERVER
-              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
-            - name: AGENT_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
-            - name: AGENT_INSTANCE_UUID
-              valueFrom:
-                fieldRef:
-                  fieldPath: 'metadata.name'     
             - name: AGENT_INSTANCE_ID
               valueFrom:
                 fieldRef:
@@ -321,61 +80,342 @@ spec:
       volumes:
         - name: sidecar  #共享agent文件夹
           emptyDir: {}
-        - name: host-time
-          hostPath:
-            path: /etc/localtim
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ instance_name }}-daoshop-ui
+  namespace: dmp-ns1
+  name: daoshop-order
   labels:
-    app: {{ instance_name }}-daoshop-ui
+    app: daoshop-order
 spec:
   selector:
     matchLabels:
-      app: {{ instance_name }}-daoshop-ui
+      app: daoshop-order
   template:
     metadata:
       labels:
-        app: {{ instance_name }}-daoshop-ui
+        app: daoshop-order
     spec:
-      imagePullSecrets:
-      - name: harbor
+      # refs: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
+          imagePullPolicy: IfNotPresent
+          command: 
+            - "sh"
+            - "-c"
+            - > 
+              mv /sidecar/skywalking/agent/optional-plugins/apm-trace-ignore-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
+              echo 'trace.ignore_path=${TRACE_IGNORE_PATH:/api/sail/**}' >> /sidecar/skywalking/agent/config/apm-trace-ignore-plugin.config;
+              cp -r /sidecar /target;
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
       containers:
-      - image: {{ daoshop-ui.image }}
-        name: {{ instance_name }}-daoshop-ui
-        resources:
-          requests:
-            memory: "500Mi"
-            cpu: "100m"
-          limits:
-            memory: "500Mi"
-            cpu: "100m"
-        ports:
-        - containerPort: 8080
-        volumeMounts:
-        - name: host-time
-          mountPath: /etc/localtime
-          readOnly: true
-        env:
-        - name: BASE_URL
-          value: "{{ gateway_runtime_url }}"
+        - image: {{ daoshop-order.image }}
+          name: daoshop-order
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "500m"
+            limits:
+              memory: "2048Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
       volumes:
-      - name: host-time
-        hostPath:
-          path: /etc/localtime
-          
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ instance_name }}-daoshop-ui
+  name: daoshop-order
 spec:
   type: NodePort
   ports:
-  - port: 80
-    nodePort: {{ daoshop_ui_port }}
+    - port: 8080
   selector:
-    app: {{ instance_name }}-daoshop-ui
+    app: daoshop-order
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dmp-ns1
+  name: daoshop-user-center
+  labels:
+    app: daoshop-user-center
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-user-center
+  template:
+    metadata:
+      labels:
+        app: daoshop-user-center
+    spec:
+      # refs: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
+          imagePullPolicy: IfNotPresent
+          command: 
+            - "sh"
+            - "-c"
+            - > 
+              mv /sidecar/skywalking/agent/optional-plugins/apm-trace-ignore-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
+              echo 'trace.ignore_path=${TRACE_IGNORE_PATH:/api/sail/**}' >> /sidecar/skywalking/agent/config/apm-trace-ignore-plugin.config;
+              cp -r /sidecar /target;
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
+      containers:
+        - image: {{ daoshop-user-center.image }}
+          name: daoshop-user-center
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "500m"
+            limits:
+              memory: "2048Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 18081
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoshop-user-center
+spec:
+  type: NodePort
+  ports:
+    - port: 18081
+  selector:
+    app: daoshop-user-center
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dmp
+  name: daoshop-ui
+  labels:
+    app: daoshop-ui
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-ui
+  template:
+    metadata:
+      labels:
+        app: daoshop-ui
+    spec:
+      imagePullSecrets:
+        - name: harbor
+      containers:
+        - image: {{ daoshop-ui.image }}
+          name: daoshop-ui
+          resources:
+            requests:
+              memory: "500Mi"
+            limits:
+              memory: "500Mi"
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: host-time
+              mountPath: /etc/localtime
+              readOnly: true
+          env:
+            - name: BASE_URL
+              value: "http://dmp-gateway-runtime-daoshop:9032"
+      volumes:
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoshop-ui
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+  selector:
+    app: daoshop-ui
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoshop-product
+spec:
+  type: NodePort
+  ports:
+    - port: 18080
+  selector:
+    app: daoshop-product
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: dmp-ns1
+  name: daoshop-admin
+  labels:
+    app: daoshop-admin
+spec:
+  selector:
+    matchLabels:
+      app: daoshop-admin
+  template:
+    metadata:
+      labels:
+        app: daoshop-admin
+    spec:
+      # refs: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/
+      initContainers:
+        - name: dx-monitor-agent-sidecar
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
+          imagePullPolicy: IfNotPresent
+          command: ["cp", "-r", "/sidecar", "/target"]
+          volumeMounts:
+            - name: sidecar
+              mountPath: /target
+      containers:
+        - image: {{ daoshop-admin.image }}
+          name: daoshop-admin
+          resources:
+            requests:
+              memory: "2048Mi"
+              cpu: "500m"
+            limits:
+              memory: "2048Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 18083
+          env:
+            - name: JAVA_OPTS
+              value: "-javaagent:/sidecar/sidecar/skywalking/agent/skywalking-agent.jar -javaagent:/sidecar/sidecar/vedfolnir/vedfolnir-agent.jar"
+            - name: DAOCLOUD_DC_SERVER
+              value: "http://dx.hypo.vip/api/sail/v2/cluster/environments"
+            - name: AGENT_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/service-name'']'
+            - name: AGENT_INSTANCE_UUID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: AGENT_INSTANCE_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.name'
+            - name: DMP_ENVIRONMENT_CODE
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/env-id'']'
+            - name: DX_APPLICATION_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-name'']'
+            - name: DX_APPLICATION_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: 'metadata.labels[''dx.daocloud.io/application-id'']'
+            - name: SW_AGENT_COLLECTOR_BACKEND_SERVICES
+              value: dx-skywalking-oap-ng.dx-pilot.svc:11800
+            - name: VEDFOLNIR_SERVER_URL
+              value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
+          volumeMounts:
+            - name: sidecar
+              mountPath: /sidecar
+      volumes:
+        - name: sidecar  #共享agent文件夹
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: daoshop-admin
+spec:
+  type: NodePort
+  ports:
+    - port: 18083
+  selector:
+    app: daoshop-admin
 
