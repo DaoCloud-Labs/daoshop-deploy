@@ -303,7 +303,7 @@ spec:
               readOnly: true
           env:
             - name: BASE_URL
-              value: "http://dmp-gateway-runtime-daoshop:9032"
+              value: "http://dmp-gateway-runtime:9032"
       volumes:
         - name: host-time
           hostPath:
@@ -352,7 +352,13 @@ spec:
         - name: dx-monitor-agent-sidecar
           image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
           imagePullPolicy: IfNotPresent
-          command: ["cp", "-r", "/sidecar", "/target"]
+          command: 
+            - "sh"
+            - "-c"
+            - > 
+              mv /sidecar/skywalking/agent/optional-plugins/apm-trace-ignore-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
+              echo 'trace.ignore_path=${TRACE_IGNORE_PATH:/api/sail/**}' >> /sidecar/skywalking/agent/config/apm-trace-ignore-plugin.config;
+              cp -r /sidecar /target;
           volumeMounts:
             - name: sidecar
               mountPath: /target
@@ -418,4 +424,3 @@ spec:
     - port: 18083
   selector:
     app: daoshop-admin
-
