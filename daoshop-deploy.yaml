@@ -303,7 +303,7 @@ spec:
               readOnly: true
           env:
             - name: BASE_URL
-              value: "http://dmp-gateway-runtime:9032"
+              value: "dmp-gateway-runtime:9032"
       volumes:
         - name: host-time
           hostPath:
@@ -350,13 +350,14 @@ spec:
       # refs: https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-initialization/
       initContainers:
         - name: dx-monitor-agent-sidecar
-          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-0b0cbd1
+          image: registry.dx.io/daocloud-dmp/dx-monitor-agent-sidecar:release-2.3.0-183ef83
           imagePullPolicy: IfNotPresent
           command: 
             - "sh"
             - "-c"
             - > 
               mv /sidecar/skywalking/agent/optional-plugins/apm-trace-ignore-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
+              mv /sidecar/skywalking/agent/bootstrap-plugins/apm-jdk-http-plugin-6.5.0-SNAPSHOT.jar /sidecar/skywalking/agent/plugins;
               echo 'trace.ignore_path=${TRACE_IGNORE_PATH:/api/sail/**}' >> /sidecar/skywalking/agent/config/apm-trace-ignore-plugin.config;
               cp -r /sidecar /target;
           volumeMounts:
@@ -407,6 +408,10 @@ spec:
               value: dx-skywalking-oap-ng.dx-pilot.svc:11800
             - name: VEDFOLNIR_SERVER_URL
               value: ws://dmp-vedfolnir-manager.dx-pilot.svc:8002
+            - name: APOLLO_CONFIGSERVICE
+              value: http://dmp-apollo-configservice.dx-pilot:8080
+            - name: APOLLO_APP_ID
+              value: test
           volumeMounts:
             - name: sidecar
               mountPath: /sidecar
@@ -424,3 +429,4 @@ spec:
     - port: 18083
   selector:
     app: daoshop-admin
+
